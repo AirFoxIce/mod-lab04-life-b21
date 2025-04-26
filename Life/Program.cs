@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.IO;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace cli_life
 {
@@ -105,7 +106,30 @@ namespace cli_life
             return JsonSerializer.Deserialize<Settings>(json);
         }
 
+        static void Save(string path){
+            using (StreamWriter writer = new StreamWriter(path))
+            {
+                for (int y = 0; y < board.Rows; y++)
+                {
+                    for (int x = 0; x < board.Rows; x++)
+                    {
+                        Cell currentCell = board.Cells[x, y];
+                        if(currentCell.IsAlive)
+                        {
+                            writer.Write('1');
+                        }
+                        else
+                        {
+                            writer.Write('0');
+                        }
+                        writer.WriteLine();
+                    }
+                }
+            }
+        }
+
         static Board board;
+
         static private void Reset()
         {
             var settings = LoadSettings("settings.json");
@@ -133,12 +157,37 @@ namespace cli_life
         static void Main(string[] args)
         {
             Reset();
-            while(true)
+            bool running = true;
+            while(running)
             {
                 Console.Clear();
                 Render();
                 board.Advance();
-                Thread.Sleep(1000);
+                Thread.Sleep(2000);
+
+                if(Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey(true);
+
+                    switch(key.Key)
+                    {
+                        case ConsoleKey.Q:
+                            running = false;
+                            Console.WriteLine("Игра окончена.");
+                            break;
+
+                        case ConsoleKey.P:
+                            Console.WriteLine("Пауза. Нажмите любую клавишу для продолжения.");
+                            Console.ReadKey(true);
+                            break;
+
+                        case ConsoleKey.S:
+                            Save("board.txt");
+                            Console.WriteLine("Состояние игры сохранено.");
+                            Thread.Sleep(2000);
+                            break;
+                    }
+                }
             }
         }
     }
