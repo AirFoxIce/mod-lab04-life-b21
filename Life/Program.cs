@@ -106,24 +106,51 @@ namespace cli_life
             return JsonSerializer.Deserialize<Settings>(json);
         }
 
-        static void Save(string path){
+        static void Load(string path)
+        {
+            string[] lines = File.ReadAllLines(path);
+            int rows = lines.Length;
+            int columns = lines[0].Length;
+            board = new Board(columns, rows, 1, 0.0);
+            for (int y = 0; y < board.Rows && y < lines.Length; y++)
+            {
+                string line = lines[y];
+
+                for (int x = 0; x < board.Columns && x < line.Length; x++)
+                {
+                    Cell currentCell = board.Cells[x, y];
+
+                    if (line[x] == '*')
+                    {
+                        currentCell.IsAlive = true;
+                    }
+                    else
+                    {
+                        currentCell.IsAlive = false;
+                    }
+                }
+            }
+        }
+        
+        static void Save(string path)
+        {
             using (StreamWriter writer = new StreamWriter(path))
             {
                 for (int y = 0; y < board.Rows; y++)
                 {
-                    for (int x = 0; x < board.Rows; x++)
+                    for (int x = 0; x < board.Columns; x++)
                     {
                         Cell currentCell = board.Cells[x, y];
                         if(currentCell.IsAlive)
                         {
-                            writer.Write('1');
+                            writer.Write('*');
                         }
                         else
                         {
-                            writer.Write('0');
+                            writer.Write(' ');
                         }
-                        writer.WriteLine();
                     }
+                    writer.WriteLine();
                 }
             }
         }
@@ -133,6 +160,14 @@ namespace cli_life
         static private void Reset()
         {
             var settings = LoadSettings("settings.json");
+            if (settings.liveDensity < 0.0)
+            {
+                settings.liveDensity = 0.0;
+            }
+            else if (settings.liveDensity > 1.0)
+            {
+                settings.liveDensity = 1.0;
+            }
             board = new Board(settings.width, settings.height, settings.cellSize, settings.liveDensity);
         }
         static void Render()
@@ -160,10 +195,6 @@ namespace cli_life
             bool running = true;
             while(running)
             {
-                Console.Clear();
-                Render();
-                board.Advance();
-                Thread.Sleep(2000);
 
                 if(Console.KeyAvailable)
                 {
@@ -177,16 +208,27 @@ namespace cli_life
                             break;
 
                         case ConsoleKey.P:
-                            Console.WriteLine("Пауза. Нажмите любую клавишу для продолжения.");
+                            Console.WriteLine("Пауза. Нажмите любую клавишу для продолжения...");
                             Console.ReadKey(true);
                             break;
 
                         case ConsoleKey.S:
-                            Save("board.txt");
+                            Save("outBoard.txt");
                             Console.WriteLine("Состояние игры сохранено.");
-                            Thread.Sleep(2000);
+                            Thread.Sleep(500);
+                            break;
+                        case ConsoleKey.L:
+                            Load("inBoard.txt");
+                            Console.WriteLine("Состояние игры загружено.");
                             break;
                     }
+                }
+                else
+                {
+                    Console.Clear();
+                    Render();
+                    board.Advance();
+                    Thread.Sleep(1000);
                 }
             }
         }
