@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Core Launch (external console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/Life/bin/Debug/netcoreapp8.0/Life.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Life",
+            "console": "externalTerminal",
+            "stopAtEntry": false
+        }
+    ]
+}

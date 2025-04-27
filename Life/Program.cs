@@ -51,6 +51,18 @@ namespace cli_life
             Randomize(liveDensity);
         }
 
+        public Board(int width, int height, int cellSize)
+        {
+            CellSize = cellSize;
+
+            Cells = new Cell[width / cellSize, height / cellSize];
+            for (int x = 0; x < Columns; x++)
+                for (int y = 0; y < Rows; y++)
+                    Cells[x, y] = new Cell();
+
+            ConnectNeighbors();
+        }
+
         readonly Random rand = new Random();
         public void Randomize(double liveDensity)
         {
@@ -111,7 +123,7 @@ namespace cli_life
             string[] lines = File.ReadAllLines(path);
             int rows = lines.Length;
             int columns = lines[0].Length;
-            board = new Board(columns, rows, 1, 0.0);
+            board = new Board(columns, rows, 1);
             for (int y = 0; y < board.Rows && y < lines.Length; y++)
             {
                 string line = lines[y];
@@ -218,7 +230,7 @@ namespace cli_life
                             Thread.Sleep(500);
                             break;
                         case ConsoleKey.L:
-                            Load("inBoard.txt");
+                            Load("shapes/blinker.txt");
                             Console.WriteLine("Состояние игры загружено.");
                             break;
                     }
