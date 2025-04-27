@@ -1,6 +1,7 @@
 {
-    "width": 20,
-    "height": 20,
+    "width": 30,
+    "height": 30,
     "cellSize": 1,
-    "liveDensity": 0.1
+    "liveDensity": 0.3,
+    "stableGenerations": 2
 }

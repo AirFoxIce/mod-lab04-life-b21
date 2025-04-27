@@ -108,6 +108,7 @@ namespace cli_life
         public int height { get; set; }
         public int cellSize { get; set; }
         public double liveDensity { get; set; }
+        public int stableGenerations { get; set; }
     }
 
     class Program
@@ -143,7 +144,7 @@ namespace cli_life
                 }
             }
         }
-        
+
         static void Save(string path)
         {
             using (StreamWriter writer = new StreamWriter(path))
@@ -153,7 +154,7 @@ namespace cli_life
                     for (int x = 0; x < board.Columns; x++)
                     {
                         Cell currentCell = board.Cells[x, y];
-                        if(currentCell.IsAlive)
+                        if (currentCell.IsAlive)
                         {
                             writer.Write('*');
                         }
@@ -167,11 +168,71 @@ namespace cli_life
             }
         }
 
-        static Board board;
-
-        static private void Reset()
+        static private (int aliveCells, int groups) CountCellsAndGroups(Board board)
         {
-            var settings = LoadSettings("settings.json");
+            int aliveCells = 0;
+            int combinations = 0;
+            bool[,] visited = new bool[board.Columns, board.Rows];
+            for (int x = 0; x < board.Columns; x++)
+            {
+                for (int y = 0; y < board.Rows; y++)
+                {
+
+                    if (board.Cells[x, y].IsAlive)
+                    {
+                        aliveCells++;
+                        if (!visited[x, y])
+                        {
+                            CountCombinations(board, x, y, visited);
+                            combinations++;
+                        }
+                    }
+                }
+            }
+
+            return (aliveCells, combinations);
+        }
+
+        private static void CountCombinations(Board board, int x, int y, bool[,] visited)
+        {
+            var stack = new Stack<(int, int)>();
+            stack.Push((x, y));
+
+            while (stack.Count > 0)
+            {
+                var (currentX, currentY) = stack.Pop();
+
+                if (visited[currentX, currentY])
+                    continue;
+
+                visited[currentX, currentY] = true;
+
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        if (dx == 0 && dy == 0)
+                            continue;
+
+                        int newX = (currentX + dx + board.Columns) % board.Columns;
+                        int newY = (currentY + dy + board.Rows) % board.Rows;
+
+                        if (!visited[newX, newY] && board.Cells[newX, newY].IsAlive)
+                        {
+                            stack.Push((newX, newY));
+                        }
+                    }
+                }
+            }
+        }
+
+        static Board board;
+        static int lastAliveCells = -1;
+        static int stableCounter = 0;
+        static int stableGenerations;
+        static int countSteps = 0;
+        static private void Reset(Settings settings)
+        {
             if (settings.liveDensity < 0.0)
             {
                 settings.liveDensity = 0.0;
@@ -186,16 +247,16 @@ namespace cli_life
         {
             for (int row = 0; row < board.Rows; row++)
             {
-                for (int col = 0; col < board.Columns; col++)   
+                for (int col = 0; col < board.Columns; col++)
                 {
                     var cell = board.Cells[col, row];
                     if (cell.IsAlive)
                     {
-                        Console.Write('*');
+                        Console.Write('0');
                     }
                     else
                     {
-                        Console.Write(' ');
+                        Console.Write('.');
                     }
                 }
                 Console.Write('\n');
@@ -203,16 +264,18 @@ namespace cli_life
         }
         static void Main(string[] args)
         {
-            Reset();
+            var settings = LoadSettings("settings.json");
+            stableGenerations = settings.stableGenerations;
+            Reset(settings);
             bool running = true;
-            while(running)
+            while (running)
             {
-
-                if(Console.KeyAvailable)
+                countSteps++;
+                if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true);
 
-                    switch(key.Key)
+                    switch (key.Key)
                     {
                         case ConsoleKey.Q:
                             running = false;
@@ -230,7 +293,7 @@ namespace cli_life
                             Thread.Sleep(500);
                             break;
                         case ConsoleKey.L:
-                            Load("shapes/blinker.txt");
+                            Load("inBoard.txt");
                             Console.WriteLine("Состояние игры загружено.");
                             break;
                     }
@@ -239,10 +302,35 @@ namespace cli_life
                 {
                     Console.Clear();
                     Render();
+
+                    var (aliveCells, groups) = CountCellsAndGroups(board);
+                    Console.WriteLine($"\n===== Информация о поле =====");
+                    Console.WriteLine($"Живых клеток: {aliveCells}");
+                    Console.WriteLine($"Групп клеток : {groups}");
+                    Console.WriteLine($"Количество поколений : {countSteps}");
+                    Console.WriteLine($"==============================\n");
+
+                    if (aliveCells == lastAliveCells)
+                    {
+                        stableCounter++;
+                    }
+                    else
+                    {
+                        stableCounter = 0;
+                    }
+
+                    lastAliveCells = aliveCells;
+
+                    if (stableCounter >= stableGenerations)
+                    {
+                        running = false;
+                    }
                     board.Advance();
-                    Thread.Sleep(1000);
+                    Thread.Sleep(1);
                 }
             }
+            Console.WriteLine("\nИгра остановлена.");
+            Console.ReadKey();
         }
     }
 }
