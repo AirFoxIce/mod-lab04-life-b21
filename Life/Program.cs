@@ -109,6 +109,7 @@ namespace cli_life
         public int cellSize { get; set; }
         public double liveDensity { get; set; }
         public int stableGenerations { get; set; }
+        public int speed { get; set; }
     }
 
     class Program
@@ -133,7 +134,7 @@ namespace cli_life
                 {
                     Cell currentCell = board.Cells[x, y];
 
-                    if (line[x] == '*')
+                    if (line[x] == '0')
                     {
                         currentCell.IsAlive = true;
                     }
@@ -156,11 +157,11 @@ namespace cli_life
                         Cell currentCell = board.Cells[x, y];
                         if (currentCell.IsAlive)
                         {
-                            writer.Write('*');
+                            writer.Write('0');
                         }
                         else
                         {
-                            writer.Write(' ');
+                            writer.Write('.');
                         }
                     }
                     writer.WriteLine();
@@ -226,11 +227,268 @@ namespace cli_life
             }
         }
 
+        static void LoadTemplates(string folderPath)
+        {
+            templates.Clear();
+
+            foreach (string filePath in Directory.GetFiles(folderPath, "*.txt"))
+            {
+                string[] lines = File.ReadAllLines(filePath);
+
+                int width = lines[0].Length;
+                int height = lines.Length;
+
+                char[,] matrix = new char[width, height];
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        matrix[x, y] = lines[y][x];
+                    }
+                }
+
+                string templateName = Path.GetFileNameWithoutExtension(filePath);
+                templates[templateName] = matrix;
+            }
+        }
+
+        static List<char[,]> ExtractAllGroupsFromMatrix(char[,] matrix)
+        {
+            int width = matrix.GetLength(0);
+            int height = matrix.GetLength(1);
+
+            bool[,] visited = new bool[width, height];
+            List<char[,]> groups = new List<char[,]>();
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    if (!visited[x, y] && matrix[x, y] == '0')
+                    {
+                        var groupMatrix = ExtractSingleGroup(matrix, x, y, visited);
+                        groups.Add(groupMatrix);
+                    }
+                }
+            }
+
+            return groups;
+        }
+
+
+        static void DebugPrintGroupsAndTemplates(List<char[,]> groups, Dictionary<string, char[,]> templates)
+        {
+            Console.WriteLine("\n=== Группы ===");
+            for (int i = 0; i < groups.Count; i++)
+            {
+                Console.WriteLine($"Группа {i + 1}:");
+                PrintMatrix(groups[i]);
+                Console.WriteLine();
+            }
+
+            Console.WriteLine("\n=== Шаблоны ===");
+            foreach (var template in templates)
+            {
+                Console.WriteLine($"Шаблон {template.Key}:");
+                PrintMatrix(template.Value);
+                Console.WriteLine();
+            }
+        }
+
+        static void PrintMatrix(char[,] matrix)
+        {
+            int width = matrix.GetLength(0);
+            int height = matrix.GetLength(1);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    Console.Write(matrix[x, y]);
+                }
+                Console.WriteLine();
+            }
+        }
+
+
+        static void ClassifyGroups(Board board)
+        {
+            // Создаём рабочую копию текущего поля в виде матрицы
+            char[,] matrix = new char[board.Columns, board.Rows];
+            for (int x = 0; x < board.Columns; x++)
+            {
+                for (int y = 0; y < board.Rows; y++)
+                {
+                    matrix[x, y] = board.Cells[x, y].IsAlive ? '0' : '.';
+                }
+            }
+
+            LoadTemplates("shapes");
+
+            var groups = ExtractAllGroupsFromMatrix(matrix);
+
+            DebugPrintGroupsAndTemplates(groups, templates);
+
+            foreach (var group in groups)
+            {
+                bool matched = false;
+
+                foreach (var template in templates)
+                {
+                    if (AreMatricesEqual(group, template.Value))
+                    {
+                        Console.WriteLine(template.Key);
+                        matched = true;
+                        break;
+                    }
+                }
+
+                if (!matched)
+                {
+                    Console.WriteLine("Неизвестная схема");
+                }
+            }
+        }
+
+
+
+        static char[,] ExtractSingleGroup(char[,] matrix, int startX, int startY, bool[,] visited)
+        {
+            var stack = new Stack<(int, int)>();
+            var cells = new List<(int, int)>();
+
+            int width = matrix.GetLength(0);
+            int height = matrix.GetLength(1);
+
+            int[,] adjustedX = new int[width, height];
+            int[,] adjustedY = new int[width, height];
+
+            for (int i = 0; i < width; i++)
+                for (int j = 0; j < height; j++)
+                {
+                    adjustedX[i, j] = int.MaxValue;
+                    adjustedY[i, j] = int.MaxValue;
+                }
+
+            stack.Push((startX, startY));
+
+            int minX = 0, maxX = 0;
+            int minY = 0, maxY = 0;
+            bool first = true;
+
+            adjustedX[(startX + width) % width, (startY + height) % height] = 0;
+            adjustedY[(startX + width) % width, (startY + height) % height] = 0;
+
+            while (stack.Count > 0)
+            {
+                var (x, y) = stack.Pop();
+
+                int realX = (x + width) % width;
+                int realY = (y + height) % height;
+
+                if (visited[realX, realY])
+                    continue;
+
+                if (matrix[realX, realY] != '0')
+                    continue;
+
+                visited[realX, realY] = true;
+
+                int adjX = adjustedX[realX, realY];
+                int adjY = adjustedY[realX, realY];
+
+                cells.Add((adjX, adjY));
+
+                if (first)
+                {
+                    minX = maxX = adjX;
+                    minY = maxY = adjY;
+                    first = false;
+                }
+                else
+                {
+                    minX = Math.Min(minX, adjX);
+                    maxX = Math.Max(maxX, adjX);
+                    minY = Math.Min(minY, adjY);
+                    maxY = Math.Max(maxY, adjY);
+                }
+
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        if (dx == 0 && dy == 0)
+                            continue;
+
+                        int nx = x + dx;
+                        int ny = y + dy;
+
+                        int newRealX = (nx + width) % width;
+                        int newRealY = (ny + height) % height;
+
+                        if (!visited[newRealX, newRealY] && matrix[newRealX, newRealY] == '0')
+                        {
+                            int currentAdjX = adjustedX[realX, realY];
+                            int currentAdjY = adjustedY[realX, realY];
+
+                            int diffX = dx;
+                            int diffY = dy;
+
+                            int adjNeighborX = currentAdjX + diffX;
+                            int adjNeighborY = currentAdjY + diffY;
+
+                            if (adjustedX[newRealX, newRealY] == int.MaxValue)
+                                adjustedX[newRealX, newRealY] = adjNeighborX;
+                            if (adjustedY[newRealX, newRealY] == int.MaxValue)
+                                adjustedY[newRealX, newRealY] = adjNeighborY;
+
+                            stack.Push((nx, ny));
+                        }
+                    }
+                }
+            }
+
+            int groupWidth = maxX - minX + 1;
+            int groupHeight = maxY - minY + 1;
+            char[,] groupMatrix = new char[groupWidth, groupHeight];
+
+            for (int i = 0; i < groupWidth; i++)
+                for (int j = 0; j < groupHeight; j++)
+                    groupMatrix[i, j] = '.';
+
+            foreach (var (gx, gy) in cells)
+            {
+                groupMatrix[gx - minX, gy - minY] = '0';
+            }
+
+            return groupMatrix;
+        }
+
+
+        private static bool AreMatricesEqual(char[,] a, char[,] b)
+        {
+            if (a.GetLength(0) != b.GetLength(0) || a.GetLength(1) != b.GetLength(1))
+                return false;
+
+            for (int x = 0; x < a.GetLength(0); x++)
+            {
+                for (int y = 0; y < a.GetLength(1); y++)
+                {
+                    if (a[x, y] != b[x, y])
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
         static Board board;
         static int lastAliveCells = -1;
         static int stableCounter = 0;
         static int stableGenerations;
         static int countSteps = 0;
+        static Dictionary<string, char[,]> templates = new Dictionary<string, char[,]>();
         static private void Reset(Settings settings)
         {
             if (settings.liveDensity < 0.0)
@@ -264,6 +522,7 @@ namespace cli_life
         }
         static void Main(string[] args)
         {
+            LoadTemplates("shapes");
             var settings = LoadSettings("settings.json");
             stableGenerations = settings.stableGenerations;
             Reset(settings);
@@ -294,7 +553,9 @@ namespace cli_life
                             break;
                         case ConsoleKey.L:
                             Load("inBoard.txt");
+                            countSteps = 1;
                             Console.WriteLine("Состояние игры загружено.");
+                            Render();
                             break;
                     }
                 }
@@ -326,10 +587,11 @@ namespace cli_life
                         running = false;
                     }
                     board.Advance();
-                    Thread.Sleep(1);
+                    Thread.Sleep(settings.speed);
                 }
             }
             Console.WriteLine("\nИгра остановлена.");
+            ClassifyGroups(board);
             Console.ReadKey();
         }
     }
