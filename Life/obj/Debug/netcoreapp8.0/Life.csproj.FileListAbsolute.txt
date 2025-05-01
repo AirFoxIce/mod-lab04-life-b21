@@ -13,3 +13,11 @@ C:\Users\User\YandexDisk-Vivalexy\Programming\Штанюк\mod-lab04-life-b21\Li
 C:\Users\User\YandexDisk-Vivalexy\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\Life.pdb
 C:\Users\User\YandexDisk-Vivalexy\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\Life.genruntimeconfig.cache
 C:\Users\User\YandexDisk-Vivalexy\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\ref\Life.dll
+C:\Users\mstrh\YandexDisk\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\Life.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\mstrh\YandexDisk\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\Life.AssemblyInfoInputs.cache
+C:\Users\mstrh\YandexDisk\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\Life.AssemblyInfo.cs
+C:\Users\mstrh\YandexDisk\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\Life.csproj.CoreCompileInputs.cache
+C:\Users\mstrh\YandexDisk\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\Life.sourcelink.json
+C:\Users\mstrh\YandexDisk\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\Life.dll
+C:\Users\mstrh\YandexDisk\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\refint\Life.dll
+C:\Users\mstrh\YandexDisk\Programming\Штанюк\mod-lab04-life-b21\Life\obj\Debug\netcoreapp8.0\Life.pdb

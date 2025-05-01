@@ -4,5 +4,5 @@
     "cellSize": 1,
     "liveDensity": 0.3,
     "stableGenerations": 10,
-    "speed": 5
+    "speed": 10
 }
