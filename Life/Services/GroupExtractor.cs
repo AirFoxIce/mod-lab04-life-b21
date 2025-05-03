@@ -9,9 +9,8 @@ namespace Life.Services
         {
             int width = matrix.GetLength(0);
             int height = matrix.GetLength(1);
-
             bool[,] visited = new bool[width, height];
-            List<char[,]> groups = new List<char[,]>();
+            List<char[,]> groups = new();
 
             for (int y = 0; y < height; y++)
             {
@@ -19,8 +18,8 @@ namespace Life.Services
                 {
                     if (!visited[x, y] && matrix[x, y] == '0')
                     {
-                        var groupMatrix = ExtractSingleGroup(matrix, x, y, visited);
-                        groups.Add(groupMatrix);
+                        var group = ExtractSingleGroup(matrix, x, y, visited);
+                        groups.Add(group);
                     }
                 }
             }
@@ -30,114 +29,53 @@ namespace Life.Services
 
         public static char[,] ExtractSingleGroup(char[,] matrix, int startX, int startY, bool[,] visited)
         {
+            int width = matrix.GetLength(0);
+            int height = matrix.GetLength(1);
             var stack = new Stack<(int, int)>();
             var cells = new List<(int, int)>();
 
-            int width = matrix.GetLength(0);
-            int height = matrix.GetLength(1);
-
-            int[,] adjustedX = new int[width, height];
-            int[,] adjustedY = new int[width, height];
-
-            for (int i = 0; i < width; i++)
-                for (int j = 0; j < height; j++)
-                {
-                    adjustedX[i, j] = int.MaxValue;
-                    adjustedY[i, j] = int.MaxValue;
-                }
+            int minX = startX, maxX = startX;
+            int minY = startY, maxY = startY;
 
             stack.Push((startX, startY));
-
-            int minX = 0, maxX = 0;
-            int minY = 0, maxY = 0;
-            bool first = true;
-
-            adjustedX[(startX + width) % width, (startY + height) % height] = 0;
-            adjustedY[(startX + width) % width, (startY + height) % height] = 0;
 
             while (stack.Count > 0)
             {
                 var (x, y) = stack.Pop();
+                x = (x + width) % width;
+                y = (y + height) % height;
 
-                int realX = (x + width) % width;
-                int realY = (y + height) % height;
-
-                if (visited[realX, realY])
+                if (visited[x, y] || matrix[x, y] != '0')
                     continue;
 
-                if (matrix[realX, realY] != '0')
-                    continue;
+                visited[x, y] = true;
+                cells.Add((x, y));
 
-                visited[realX, realY] = true;
-
-                int adjX = adjustedX[realX, realY];
-                int adjY = adjustedY[realX, realY];
-
-                cells.Add((adjX, adjY));
-
-                if (first)
-                {
-                    minX = maxX = adjX;
-                    minY = maxY = adjY;
-                    first = false;
-                }
-                else
-                {
-                    minX = Math.Min(minX, adjX);
-                    maxX = Math.Max(maxX, adjX);
-                    minY = Math.Min(minY, adjY);
-                    maxY = Math.Max(maxY, adjY);
-                }
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
 
                 for (int dx = -1; dx <= 1; dx++)
-                {
                     for (int dy = -1; dy <= 1; dy++)
                     {
-                        if (dx == 0 && dy == 0)
-                            continue;
-
-                        int nx = x + dx;
-                        int ny = y + dy;
-
-                        int newRealX = (nx + width) % width;
-                        int newRealY = (ny + height) % height;
-
-                        if (!visited[newRealX, newRealY] && matrix[newRealX, newRealY] == '0')
-                        {
-                            int currentAdjX = adjustedX[realX, realY];
-                            int currentAdjY = adjustedY[realX, realY];
-
-                            int diffX = dx;
-                            int diffY = dy;
-
-                            int adjNeighborX = currentAdjX + diffX;
-                            int adjNeighborY = currentAdjY + diffY;
-
-                            if (adjustedX[newRealX, newRealY] == int.MaxValue)
-                                adjustedX[newRealX, newRealY] = adjNeighborX;
-                            if (adjustedY[newRealX, newRealY] == int.MaxValue)
-                                adjustedY[newRealX, newRealY] = adjNeighborY;
-
-                            stack.Push((nx, ny));
-                        }
+                        if (dx == 0 && dy == 0) continue;
+                        stack.Push((x + dx, y + dy));
                     }
-                }
             }
 
             int groupWidth = maxX - minX + 1;
             int groupHeight = maxY - minY + 1;
-            char[,] groupMatrix = new char[groupWidth, groupHeight];
+            var result = new char[groupWidth, groupHeight];
 
             for (int i = 0; i < groupWidth; i++)
                 for (int j = 0; j < groupHeight; j++)
-                    groupMatrix[i, j] = '.';
+                    result[i, j] = '.';
 
-            foreach (var (gx, gy) in cells)
-            {
-                groupMatrix[gx - minX, gy - minY] = '0';
-            }
+            foreach (var (x, y) in cells)
+                result[x - minX, y - minY] = '0';
 
-            return groupMatrix;
+            return result;
         }
     }
 }

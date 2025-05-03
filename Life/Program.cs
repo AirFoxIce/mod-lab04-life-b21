@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using Life.Models;
 using Life.Services;
+using Life.Graphics;
 
 namespace Life
 {
@@ -10,70 +13,93 @@ namespace Life
         static void Main(string[] args)
         {
             var settings = BoardLoader.LoadSettings("settings.json");
-
-            Board board = new Board(settings.width, settings.height, settings.cellSize, settings.liveDensity);
-
             TemplateManager.LoadTemplates("shapes");
 
-            bool running = true;
-            int stableCounter = 0;
-            int lastAliveCells = -1;
-            int countSteps = 0;
+            Console.WriteLine("Выберите режим:");
+            Console.WriteLine("1 — обычная игра");
+            Console.WriteLine("2 — исследование стабильности");
+            Console.WriteLine("3 — построение графика");
+            Console.WriteLine();
+
+            var choice = Console.ReadKey(true).Key;
+            if (choice == ConsoleKey.D1)
+            {
+                RunInteractiveGame(settings);
+            }
+            else if (choice == ConsoleKey.D2)
+            {
+                RunStabilityResearch(settings);
+            }
+            else if (choice == ConsoleKey.D3)
+            {
+                PlotGenerator.GeneratePlot("stability_data.txt", "output.png");
+                Console.WriteLine("График сохранён как output.png");
+                Console.ReadKey();
+            }
+            else
+            {
+                Console.WriteLine("Неизвестный режим.");
+            }
+        }
+
+        static void RunInteractiveGame(Settings settings)
+        {
+            var board = new Board(settings.width, settings.height, settings.cellSize, settings.liveDensity);
+            var stableCount = 0;
+            var lastAlive = -1;
+            var gen = 0;
+            var running = true;
 
             while (running)
             {
-                countSteps++;
-
+                gen++;
                 Console.Clear();
                 BoardLoader.Render(board);
 
-                var (aliveCells, groups) = BoardLoader.CountCellsAndGroups(board);
-
-                Console.WriteLine($"\n===== Информация о поле =====");
-                Console.WriteLine($"Живых клеток: {aliveCells}");
+                var (alive, groups) = BoardLoader.CountCellsAndGroups(board);
+                Console.WriteLine($"\nЖивых клеток: {alive}");
                 Console.WriteLine($"Групп клеток: {groups}");
-                Console.WriteLine($"Количество поколений: {countSteps}");
-                Console.WriteLine($"==============================\n");
+                Console.WriteLine($"Поколение: {gen}");
 
-                if (aliveCells == lastAliveCells)
-                    stableCounter++;
+                if (alive == lastAlive)
+                    stableCount++;
                 else
-                    stableCounter = 0;
+                    stableCount = 0;
 
-                lastAliveCells = aliveCells;
+                lastAlive = alive;
 
-                if (stableCounter >= settings.stableGenerations)
+                if (stableCount >= settings.stableGenerations)
                 {
-                    Console.WriteLine("\nИгра остановлена.\n");
+                    Console.WriteLine("\nИгра остановлена.");
                     Classifier.ClassifyGroups(board);
-                    
                     break;
                 }
 
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true).Key;
-                    switch (key)
+                    if (key == ConsoleKey.Q)
                     {
-                        case ConsoleKey.Q:
-                            running = false;
-                            Console.WriteLine("Игра завершена.");
-                            break;
-                        case ConsoleKey.P:
-                            Console.WriteLine("Пауза. Нажмите любую клавишу для продолжения...");
-                            Console.ReadKey(true);
-                            break;
-                        case ConsoleKey.S:
-                            BoardLoader.Save(board, "outBoard.txt");
-                            Console.WriteLine("Состояние игры сохранено.");
-                            Thread.Sleep(500);
-                            break;
-                        case ConsoleKey.L:
-                            BoardLoader.Load(board, "inBoard.txt");
-                            Console.WriteLine("Состояние игры загружено.");
-                            BoardLoader.Render(board);
-                            countSteps = 1;
-                            break;
+                        running = false;
+                        Console.WriteLine("Выход из игры.");
+                    }
+                    else if (key == ConsoleKey.P)
+                    {
+                        Console.WriteLine("Пауза. Нажмите любую клавишу...");
+                        Console.ReadKey(true);
+                    }
+                    else if (key == ConsoleKey.S)
+                    {
+                        BoardLoader.Save(board, "outBoard.txt");
+                        Console.WriteLine("Сохранено в outBoard.txt");
+                        Thread.Sleep(500);
+                    }
+                    else if (key == ConsoleKey.L)
+                    {
+                        BoardLoader.Load(board, "inBoard.txt");
+                        Console.WriteLine("Загружено из inBoard.txt");
+                        BoardLoader.Render(board);
+                        gen = 1;
                     }
                 }
 
@@ -82,6 +108,50 @@ namespace Life
             }
 
             Console.ReadKey();
+        }
+
+        static void RunStabilityResearch(Settings settings)
+        {
+            var results = new List<(double, int)>();
+
+            for (double d = 0.05; d <= 0.95; d += 0.05)
+            {
+                int g = RunSilentSimulation(settings, d);
+                results.Add((d, g));
+                Console.WriteLine($"Плотность {d:F2}: стабилизация за {g} поколений");
+            }
+
+            GraphDataSaver.SaveData(results, "stability_data.txt");
+            Console.WriteLine("\nИсследование завершено. Данные записаны в stability_data.txt");
+            Console.ReadKey();
+        }
+
+        static int RunSilentSimulation(Settings settings, double density)
+        {
+            var board = new Board(settings.width, settings.height, settings.cellSize, density);
+            int stable = 0;
+            int last = -1;
+            int gen = 0;
+
+            while (true)
+            {
+                gen++;
+                var alive = BoardLoader.CountCellsAndGroups(board).aliveCells;
+
+                if (alive == last)
+                    stable++;
+                else
+                    stable = 0;
+
+                last = alive;
+
+                if (stable >= settings.stableGenerations)
+                    break;
+
+                board.Advance();
+            }
+
+            return gen;
         }
     }
 }

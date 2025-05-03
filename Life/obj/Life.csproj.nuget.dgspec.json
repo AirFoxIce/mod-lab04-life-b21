@@ -49,6 +49,12 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "netcoreapp8.0",
+          "dependencies": {
+            "ScottPlot": {
+              "target": "Package",
+              "version": "[4.1.52, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
