@@ -18,7 +18,6 @@ namespace Life
             Console.WriteLine("Выберите режим:");
             Console.WriteLine("1 — обычная игра");
             Console.WriteLine("2 — исследование стабильности");
-            Console.WriteLine("3 — построение графика");
             Console.WriteLine();
 
             var choice = Console.ReadKey(true).Key;
@@ -29,12 +28,6 @@ namespace Life
             else if (choice == ConsoleKey.D2)
             {
                 RunStabilityResearch(settings);
-            }
-            else if (choice == ConsoleKey.D3)
-            {
-                PlotGenerator.GeneratePlot("stability_data.txt", "output.png");
-                Console.WriteLine("График сохранён как output.png");
-                Console.ReadKey();
             }
             else
             {
@@ -123,6 +116,7 @@ namespace Life
 
             GraphDataSaver.SaveData(results, "stability_data.txt");
             Console.WriteLine("\nИсследование завершено. Данные записаны в stability_data.txt");
+            PlotGenerator.GeneratePlot("stability_data.txt", "output.png");
             Console.ReadKey();
         }
 

@@ -6,8 +6,10 @@ namespace Life.Services
 {
     public static class Classifier
     {
-        public static void ClassifyGroups(Board board)
+        public static List<string> ClassifyGroups(Board board)
         {
+            var result = new List<string>();
+
             char[,] matrix = new char[board.Columns, board.Rows];
 
             for (int x = 0; x < board.Columns; x++)
@@ -36,7 +38,9 @@ namespace Life.Services
                         TemplateManager.AreMatricesEqual(group, rotated180) ||
                         TemplateManager.AreMatricesEqual(group, rotated270))
                     {
-                        Console.WriteLine($"Найдена схема: {template.Key}");
+                        string message = $"Найдена схема: {template.Key}";
+                        Console.WriteLine(message);
+                        result.Add(template.Key);
                         matched = true;
                         break;
                     }
@@ -44,9 +48,11 @@ namespace Life.Services
 
                 if (!matched)
                 {
+                    result.Add("Неизвестная схема");
                     Console.WriteLine("Неизвестная схема");
                 }
             }
+            return result;
         }
     }
 }
