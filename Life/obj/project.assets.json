@@ -252,11 +252,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\User\\YandexDisk-Vivalexy\\Programming\\Штанюк\\mod-lab04-life-b21\\Life\\Life.csproj",
+      "projectUniqueName": "C:\\Users\\User\\YandexDisk-Vivalexy\\Programming\\Modeling_of_information_processes\\mod-lab04-life-b21\\Life\\Life.csproj",
       "projectName": "Life",
-      "projectPath": "C:\\Users\\User\\YandexDisk-Vivalexy\\Programming\\Штанюк\\mod-lab04-life-b21\\Life\\Life.csproj",
+      "projectPath": "C:\\Users\\User\\YandexDisk-Vivalexy\\Programming\\Modeling_of_information_processes\\mod-lab04-life-b21\\Life\\Life.csproj",
       "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\User\\YandexDisk-Vivalexy\\Programming\\Штанюк\\mod-lab04-life-b21\\Life\\obj\\",
+      "outputPath": "C:\\Users\\User\\YandexDisk-Vivalexy\\Programming\\Modeling_of_information_processes\\mod-lab04-life-b21\\Life\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -316,7 +316,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.204/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

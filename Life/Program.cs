@@ -114,9 +114,9 @@ namespace Life
                 Console.WriteLine($"Плотность {d:F2}: стабилизация за {g} поколений");
             }
 
-            GraphDataSaver.SaveData(results, "stability_data.txt");
-            Console.WriteLine("\nИсследование завершено. Данные записаны в stability_data.txt");
-            PlotGenerator.GeneratePlot("stability_data.txt", "output.png");
+            GraphDataSaver.SaveData(results, "data.txt");
+            Console.WriteLine("\nИсследование завершено. Данные записаны в data.txt");
+            PlotGenerator.GeneratePlot("data.txt", "plot.png");
             Console.ReadKey();
         }
 
